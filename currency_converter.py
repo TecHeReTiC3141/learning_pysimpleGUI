@@ -1,5 +1,5 @@
 import PySimpleGUI as sg
-currency = {'USD': ('$', 83.59), 'EURO': ('€', 92.39), 'Zloty': ("zł", 19.86), 'Hrivna': ('₴', 2.84)}
+from getting_info_about_currency import source_data, currency
 layout = [
     [sg.Text('Hello, Insert value:', enable_events=True, key='-GREET-'),
      sg.Input(key='-INPUT-')],
@@ -18,10 +18,12 @@ while True:
         print('In progress')
         try:
             inp = float(values["-INPUT-"])
+            cur_val = currency[values["-CURRENCY-"]]
             if values["-TYPE-"] == "to rouble":
-                window['-RESULT-'].update(f'Input: {inp}; Result: {round(inp * currency[values["-CURRENCY-"]][1], 2)}₽')
+
+                window['-RESULT-'].update(f'Input: {inp}; Result: {round(inp * cur_val["Value"] / cur_val["Nominal"], 2)}₽')
             else:
-                window['-RESULT-'].update(f'Input: {inp}; Result: {round(inp / currency[values["-CURRENCY-"]][1], 2)}{currency[values["-CURRENCY-"]][0]}')
+                window['-RESULT-'].update(f'Input: {inp}; Result: {round(inp / cur_val["Value"] * cur_val["Nominal"], 2)} {cur_val["Name"]}')
         except Exception as e:
             window['-RESULT-'].update('Wrong input. Please type a number')
             print(e)
