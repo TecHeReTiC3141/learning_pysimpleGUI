@@ -2,8 +2,6 @@ import json
 import requests
 from pprint import pprint
 
-
-currency = {'USD': ('$', 83.59), 'EUR': ('€', 92.39), 'PLN': ("zł", 19.86), 'UAH': ('₴', 2.84)}
 def get_currency_info(currency: list) -> tuple:
     curr_info = requests.get(r'https://www.cbr-xml-daily.ru/daily_json.js')
     if curr_info.status_code == 200:
