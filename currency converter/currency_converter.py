@@ -8,7 +8,7 @@ layout = [
     [sg.Text('Hello, Insert value:', enable_events=True, key='-GREET-'),
      sg.Input(key='-INPUT-')],
     [sg.Button('Convert!', key='-CONV-'), sg.Spin(list(curr_data.keys()), key='-CURRENCY-'), sg.Spin(['to rouble', 'from rouble'], key='-TYPE-')],
-    [sg.Text('Input: ; Result: ', key='-RESULT-'), sg.Button('Reset', key='-RESET-'), sg.Text(f'Data gathered in {sourse_date}', background_color='White', text_color='Black')],
+    [sg.Text('', key='-RESULT-'), sg.Button('Reset', key='-RESET-'), sg.Text(f'Data gathered in {sourse_date}', background_color='White', text_color='Black')],
 ]
 
 window = sg.Window('Currency Converter', layout)
@@ -19,18 +19,17 @@ while True:
         break
 
     elif event == '-CONV-':
-        try:
+        if values['-INPUT-'].isnumeric():
             inp = float(values["-INPUT-"])
             cur_val = curr_data[values["-CURRENCY-"]]
             window['-RESULT-'].update(visible=True)
             if values["-TYPE-"] == "to rouble":
 
-                window['-RESULT-'].update(f'Input: {inp}; Result: {round(inp * cur_val["Value"] / cur_val["Nominal"], 2)}₽')
+                window['-RESULT-'].update(f'Output: {inp} {cur_val["Name"]} = {round(inp * cur_val["Value"] / cur_val["Nominal"], 2)}₽')
             else:
-                window['-RESULT-'].update(f'Input: {inp}₽; Result: {round(inp / cur_val["Value"] * cur_val["Nominal"], 2)} {cur_val["Name"]}')
-        except Exception as e:
-            window['-RESULT-'].update('Wrong input. Please type a number')
-            print(e)
+                window['-RESULT-'].update(f'Output: {inp}₽ = {round(inp / cur_val["Value"] * cur_val["Nominal"], 2)} {cur_val["Name"]}')
+        else:
+            window['-RESULT-'].update('Wrong input. Please enter a number')
 
 
     elif event == '-RESET-':
