@@ -1,2 +1,2 @@
 # learning_pysimpleGUI
-A series of simple project devoted to learning PySimpleGUI
+A series of simple projects devoted to learning PySimpleGUI
