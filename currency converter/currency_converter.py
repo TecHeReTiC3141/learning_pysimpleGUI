@@ -4,6 +4,7 @@ from getting_info_about_currency import *
 sourse_date, curr_data = get_currency_info(['USD', 'EUR', 'PLN', 'UAH', 'JPY'])
 pprint(curr_data)
 
+sg.theme('DarkAmber')
 layout = [
     [sg.Text('Hello, Insert value:', enable_events=True, key='-GREET-'),
      sg.Input(key='-INPUT-')],
