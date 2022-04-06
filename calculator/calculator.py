@@ -1,4 +1,5 @@
 import PySimpleGUI as sg
+from string import digits
 
 
 def create_themed_window(theme: str):
@@ -7,25 +8,34 @@ def create_themed_window(theme: str):
 
     def_button_size = (4, 2)
     layout = [
-        [sg.Push(), sg.Text('Screen', key='-Screen-', border_width=2, font='Franklin 25', pad=(5, 25), right_click_menu=themes)],
+        [sg.Push(), sg.Text('...', key='-SCREEN-', border_width=2, font='Franklin 25', pad=(5, 25), right_click_menu=themes)],
+        [sg.Text('Answer', key='-ANS-')],
         [sg.Button('Enter', key='-ENTER-', size=def_button_size, expand_x=True),
          sg.Button('Clear', key='-CLEAR-', size=def_button_size, expand_x=True)],
-        [sg.Button('7', key='-7-', size=def_button_size), sg.Button('8', key='-8-', size=def_button_size),
-         sg.Button('9', key='-9-', size=def_button_size),
-         sg.Button('/', key='-DIV-', size=def_button_size)],
-        [sg.Button('4', key='-4-', size=def_button_size), sg.Button('5', key='-5-', size=def_button_size),
-         sg.Button('6', key='-6-', size=def_button_size),
-         sg.Button('*', key='-MULTY-', size=def_button_size)],
-        [sg.Button('1', key='-1-', size=def_button_size), sg.Button('2', key='-2-', size=def_button_size),
-         sg.Button('3', key='-3-', size=def_button_size),
-         sg.Button('-', key='-MINUS-', size=def_button_size)],
-        [sg.Button('0', key='-0-', size=def_button_size, expand_x=True),
-         sg.Button('.', key='-PERIOD-', size=def_button_size), sg.Button('+', key='-PLUS-', size=def_button_size)]
+        [sg.Button('7',size=def_button_size), sg.Button('8',  size=def_button_size),
+         sg.Button('9',  size=def_button_size),
+         sg.Button('/', size=def_button_size)],
+        [sg.Button('4', size=def_button_size), sg.Button('5',  size=def_button_size),
+         sg.Button('6', size=def_button_size),
+         sg.Button('*', size=def_button_size)],
+        [sg.Button('1', size=def_button_size), sg.Button('2', size=def_button_size),
+         sg.Button('3', size=def_button_size),
+         sg.Button('-', size=def_button_size)],
+        [sg.Button('0', size=def_button_size, expand_x=True),
+         sg.Button('.', size=def_button_size), sg.Button('+', size=def_button_size)]
     ]
     return sg.Window('Calculator', layout)
 
+
+def calc(f: float, s: float, op: str) -> float:
+    return round(eval(f'f {op} s'), 2)
+
+
+
 themes = ['menu', ['DarkAmber', 'dark', 'graygraygray', 'random']]
 window = create_themed_window('dark')
+cur_dig = []
+opers = []
 
 while True:
     event, values = window.read()
@@ -36,3 +46,30 @@ while True:
 
     elif event in themes[1]:
         window = create_themed_window(event)
+
+    elif event in digits + '.':
+        cur_dig.append(event)
+        window['-SCREEN-'].update(''.join(cur_dig))
+
+    elif event in '+-/*':
+        opers.append(''.join(cur_dig))
+        if len(opers) == 3:
+            try:
+                f, op, s = float(opers[0]), opers[1], float(opers[2])
+
+                opers = [str(calc(f, s, op))]
+            except ValueError as e:
+                window['-ANS-'].update('Invalid input')
+
+
+        opers.append(event)
+        cur_dig = []
+        print(opers)
+        window['-SCREEN-'].update(''.join(cur_dig))
+        window['-ANS-'].update(f'={opers[0] + opers[1]}')
+
+    elif event == '-CLEAR-':
+        window['-SCREEN-'].update('...')
+        cur_dig = []
+        opers = []
+
