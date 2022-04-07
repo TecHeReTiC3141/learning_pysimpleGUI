@@ -65,11 +65,14 @@ while True:
         opers.append(event)
         cur_dig = []
         print(opers)
-        window['-SCREEN-'].update(''.join(cur_dig))
-        window['-ANS-'].update(f'={opers[0] + opers[1]}')
+        window['-SCREEN-'].update(f'{opers[0] + opers[1]}')
 
     elif event == '-CLEAR-':
         window['-SCREEN-'].update('...')
         cur_dig = []
         opers = []
+
+    elif event == '-ENTER-':
+        pass
+        # TODO implement Enter button
 
