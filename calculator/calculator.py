@@ -52,14 +52,16 @@ while True:
         window['-SCREEN-'].update(''.join(cur_dig))
 
     elif event in '+-/*':
-        opers.append(''.join(cur_dig))
+        if cur_dig:
+            opers.append(''.join(cur_dig))
         if len(opers) == 3:
             try:
                 f, op, s = float(opers[0]), opers[1], float(opers[2])
 
                 opers = [str(calc(f, s, op))]
-            except ValueError as e:
+            except Exception as e:
                 window['-ANS-'].update('Invalid input')
+                opers.pop()
 
 
         opers.append(event)
@@ -73,6 +75,18 @@ while True:
         opers = []
 
     elif event == '-ENTER-':
-        pass
+        if cur_dig:
+            opers.append(''.join(cur_dig))
+            if len(opers) == 3:
+                try:
+                    f, op, s = float(opers[0]), opers[1], float(opers[2])
+
+                    opers = [str(calc(f, s, op))]
+                except ValueError as e:
+                    window['-ANS-'].update('Invalid input')
+
+            cur_dig = []
+            print(opers)
+            window['-SCREEN-'].update(f'{opers[0]}')
         # TODO implement Enter button
 
