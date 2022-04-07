@@ -8,14 +8,15 @@ def create_themed_window(theme: str):
 
     def_button_size = (4, 2)
     layout = [
-        [sg.Push(), sg.Text('...', key='-SCREEN-', border_width=2, font='Franklin 25', pad=(5, 25), right_click_menu=themes)],
+        [sg.Push(),
+         sg.Text('...', key='-SCREEN-', border_width=2, font='Franklin 25', pad=(5, 25), right_click_menu=themes)],
         [sg.Text('Answer', key='-ANS-')],
         [sg.Button('Enter', key='-ENTER-', size=def_button_size, expand_x=True),
          sg.Button('Clear', key='-CLEAR-', size=def_button_size, expand_x=True)],
-        [sg.Button('7',size=def_button_size), sg.Button('8',  size=def_button_size),
-         sg.Button('9',  size=def_button_size),
+        [sg.Button('7', size=def_button_size), sg.Button('8', size=def_button_size),
+         sg.Button('9', size=def_button_size),
          sg.Button('/', size=def_button_size)],
-        [sg.Button('4', size=def_button_size), sg.Button('5',  size=def_button_size),
+        [sg.Button('4', size=def_button_size), sg.Button('5', size=def_button_size),
          sg.Button('6', size=def_button_size),
          sg.Button('*', size=def_button_size)],
         [sg.Button('1', size=def_button_size), sg.Button('2', size=def_button_size),
@@ -29,7 +30,6 @@ def create_themed_window(theme: str):
 
 def calc(f: float, s: float, op: str) -> float:
     return round(eval(f'f {op} s'), 2)
-
 
 
 themes = ['menu', ['DarkAmber', 'dark', 'graygraygray', 'random']]
@@ -63,7 +63,6 @@ while True:
                 window['-ANS-'].update('Invalid input')
                 opers.pop()
 
-
         opers.append(event)
         cur_dig = []
         print(opers)
@@ -88,5 +87,3 @@ while True:
             cur_dig = []
             print(opers)
             window['-SCREEN-'].update(f'{opers[0]}')
-        # TODO implement Enter button
-
