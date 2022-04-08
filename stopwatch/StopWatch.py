@@ -1,5 +1,5 @@
 import PySimpleGUI as sg
-from time import sleep
+from time import sleep, time
 
 sg.theme('black')
 
@@ -9,7 +9,7 @@ layout = [
     [sg.Text('0.0', key='-TIME-', font='Young 45')],
     [
         sg.Button('Lap', button_color=('white', 'red'), border_width=2),
-        sg.Button('Reset', button_color=('white', 'red'), border_width=2)
+        sg.Button('Start', button_color=('white', 'red'), border_width=2, key='-STARTSTOP-')
     ],
     [sg.VPush()]
 ]
@@ -19,19 +19,25 @@ window = sg.Window('StopWatch',
                    size=(250, 250),
                    no_titlebar=True,
                    element_justification='center')
-cur_time = 0.
+beg_time, active = time(), False
 
 while True:
-    event, values = window.read()
+    event, values = window.read(timeout=100)
 
     if event in [sg.WIN_CLOSED, '-EXIT-']:
         break
 
-    cur_time = round(cur_time + .1, 1)
-    window['-TIME-'].update(cur_time)
-    sleep(.1)
+    elif event == '-STARTSTOP-':
+        if window['-STARTSTOP-'].get_text() == 'Start':
+            window['-STARTSTOP-'].update('Reset')
+            beg_time, active = time(), True
+            window['-TIME-'].update(round(time() - beg_time, 1))
 
+        else:
+            window['-STARTSTOP-'].update('Start')
+            active = False
 
-
+    if active:
+        window['-TIME-'].update(round(time() - beg_time, 1))
 
 window.close()
