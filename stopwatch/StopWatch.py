@@ -25,6 +25,7 @@ def create_start_window():
 
 
 beg_time, active = 0, False
+cur_laps = 0
 window = create_start_window()
 
 while True:
@@ -39,24 +40,23 @@ while True:
             beg_time, active = time(), True
             window['-LAP-'].update(visible=True)
 
-
         else:
             if beg_time == 0:
-
                 window['-STARTSTOP-'].update('Start')
                 active = False
                 window['-TIME-'].update(round(0., 1))
                 window['-LAP-'].update(visible=False)
+
             else:
                 window.close()
                 window = create_start_window()
-                beg_time, active = 0, False
+                beg_time, active, cur_laps = 0, False, 0
 
     elif event == '-LAP-':
+        cur_laps += 1
         window.extend_layout(window['-LAPS-'],
-                             [[sg.Text(round(time() - beg_time, 1),
-                                       justification='center',
-                                       font='Young 15')]])
+                             [[sg.Text(cur_laps), sg.VSeparator(),
+                               sg.Text(round(time() - beg_time, 1), justification='center')]])
 
     if active:
         window['-TIME-'].update(round(time() - beg_time, 1))
