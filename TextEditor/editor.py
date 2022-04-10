@@ -1,6 +1,14 @@
 import PySimpleGUI as sg
+from string import digits, ascii_letters
 
 sg.theme('dark')
+
+def stats_window(text: str) -> sg.Window:
+    symbl = len([i for i in text if digits + ascii_letters])
+    layout = [
+        [sg.Text(f'Text stats: {len(text.split())} words, {symbl} charachers')]
+    ]
+    return sg.Window('Stats', layout)
 
 layout = [
     [sg.Menu([
@@ -20,5 +28,11 @@ while True:
 
     if event in (sg.WIN_CLOSED, 'Exit'):
         break
+
+    elif event == 'Stats':
+        new_window = stats_window(window['-TEXT-'].get())
+        new_window.read()
+
+
 
 window.close()
