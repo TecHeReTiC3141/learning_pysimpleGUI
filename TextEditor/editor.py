@@ -1,9 +1,11 @@
 import PySimpleGUI as sg
 from string import digits, ascii_letters
+import datetime
 
 sg.theme('dark')
 
 themes = ['menu', ['DarkAmber', 'dark', 'graygraygray', 'random']]
+inserts = ['Insert', ['Time']]
 
 
 def create_main_window(theme: str = 'DarkAmber', content: str = '') -> sg.Window:
@@ -12,7 +14,7 @@ def create_main_window(theme: str = 'DarkAmber', content: str = '') -> sg.Window
         [sg.Menu([
             ['File', ['Open', 'Save', '---', 'Exit']],
             ['Edit and tools', [themes, 'Stats', 'LowerCase', 'UpperCase']],
-            ['Insert', ['Time']]
+            inserts
         ], key='-MENU-')],
         [sg.Text('Untitled', key='-FILENAME-')],
         [sg.Multiline(default_text=content, expand_x=True, expand_y=True,
@@ -24,7 +26,7 @@ def create_main_window(theme: str = 'DarkAmber', content: str = '') -> sg.Window
 
 def stats_window(text: str):
     symbl = len([i for i in text if i in digits + ascii_letters])
-    sg.popup(f'Text stats: {len(text.split())} words, {symbl} characters', title='Stats')
+    sg.popup(f'Text stats: {len(text.split())} words;\n {symbl} characters', title='Stats')
 
 
 window = create_main_window()
@@ -38,7 +40,22 @@ while True:
     elif event == 'Stats':
         stats_window(values['-TEXT-'])
 
+    elif event == 'Open':
+        path = sg.popup_get_file('Select file to open:', no_window=True)
+        with open(path) as f:
+            window['-TEXT-'].update(f.read())
+            name = path[path.rindex('/') + 1:]
+            window['-FILENAME-'].update(name)
+
+
     elif event in themes[1]:
         window = create_main_window(event, values['-TEXT-'])
+
+    elif event in inserts[1]:
+        if event == 'Time':
+            text = values['-TEXT-']
+
+            window['-TEXT-'].update(text + ' ' +
+                                    datetime.datetime.today().strftime('%M:%H %d.%m.%y'))
 
 window.close()
