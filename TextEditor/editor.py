@@ -1,6 +1,7 @@
 import PySimpleGUI as sg
 from string import digits, ascii_letters
 import datetime
+from pathlib import Path
 
 sg.theme('dark')
 
@@ -47,6 +48,11 @@ while True:
             name = path[path.rindex('/') + 1:]
             window['-FILENAME-'].update(name)
 
+    elif event == 'Save':
+        file = Path(sg.popup_get_file('Select file to open:',
+                                      no_window=True, save_as=True) + '.txt')
+        file.write_text(window['-TEXT-'].get())
+        window['-FILENAME-'].update(file.name)
 
     elif event in themes[1]:
         window = create_main_window(event, values['-TEXT-'])
