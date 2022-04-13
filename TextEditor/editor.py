@@ -9,7 +9,7 @@ themes = ['menu', ['DarkAmber', 'dark', 'graygraygray', 'random']]
 inserts = ['Insert', ['Time']]
 
 
-def create_main_window(theme: str = 'DarkAmber', content: str = '') -> sg.Window:
+def create_main_window(theme: str = 'DarkAmber', content: str = '', filename: str='Untitled') -> sg.Window:
     sg.theme(theme)
     layout = [
         [sg.Menu([
@@ -17,7 +17,7 @@ def create_main_window(theme: str = 'DarkAmber', content: str = '') -> sg.Window
             ['Edit and tools', [themes, 'Stats', 'LowerCase', 'UpperCase']],
             inserts
         ], key='-MENU-')],
-        [sg.Text('Untitled', key='-FILENAME-')],
+        [sg.Text(filename, key='-FILENAME-')],
         [sg.Multiline(default_text=content, expand_x=True, expand_y=True,
                       pad=((5, 5), (5, 15)), key='-TEXT-', no_scrollbar=True)]
     ]
