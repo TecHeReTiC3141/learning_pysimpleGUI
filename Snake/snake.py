@@ -17,7 +17,7 @@ layout = [
 window = sg.Window('Snake', layout, return_keyboard_events=True)
 
 while True:
-    event, values = window.read()
+    event, values = window.read(timeout=10)
 
     if event == sg.WIN_CLOSED:
         break
@@ -30,5 +30,9 @@ while True:
         print('right')
     elif event == 'Down:40':
         print('down')
+
+    for i in range(cell_num):
+        for j in range(cell_num):
+            game_field.DrawRectangle(*pos_to_pixel(i, j), 'red')
 
 window.close()
