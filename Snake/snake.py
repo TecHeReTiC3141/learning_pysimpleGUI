@@ -7,7 +7,7 @@ game_field = sg.Graph(
     canvas_size=(field_size, field_size),
     graph_bottom_left=(0, 0),
     graph_top_right = (field_size, field_size),
-    background_color='black'
+    background_color='green'
 )
 
 layout = [
