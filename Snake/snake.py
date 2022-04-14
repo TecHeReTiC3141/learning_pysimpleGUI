@@ -1,38 +1,22 @@
-import PySimpleGUI as sg
 from constants import *
+from collections import deque
 
-sg.theme('DarkAmber')
+directions = {'left': (-1, 0), 'right': (1, 0), 'up': (0, 1), 'down': (0, -1)}
+class Snake:
 
-game_field = sg.Graph(
-    canvas_size=(field_size, field_size),
-    graph_bottom_left=(0, 0),
-    graph_top_right = (field_size, field_size),
-    background_color='black'
-)
+    def __init__(self, segm: list[tuple], direction: str= 'right'):
+        self.segm = deque(segm)
+        self.direction = direction
 
-layout = [
-    [game_field]
-]
+    def move(self):
+        head, dirs = self.segm[0], \
+                     directions[self.direction]
+        self.segm.appendleft((head[0] + dirs[0],
+                              head[1] + dirs[1]))
+        self.segm.pop()
 
-window = sg.Window('Snake', layout, return_keyboard_events=True)
+    def set_dir(self, direct: str):
+        self.direction = direct
 
-while True:
-    event, values = window.read(timeout=10)
-
-    if event == sg.WIN_CLOSED:
-        break
-
-    elif event == 'Left:37':
-        print('left')
-    elif event == 'Up:38':
-        print('up')
-    elif event == 'Right:39':
-        print('right')
-    elif event == 'Down:40':
-        print('down')
-
-    for i in range(cell_num):
-        for j in range(cell_num):
-            game_field.DrawRectangle(*pos_to_pixel(i, j), 'red')
-
-window.close()
+    def draw_object(self):
+        return [pos_to_pixel(*i) for i in self.segm]
