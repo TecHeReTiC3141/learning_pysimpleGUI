@@ -1,6 +1,6 @@
 import PySimpleGUI as sg
 from snake import *
-from time import sleep
+from time import sleep, time
 
 sg.theme('DarkAmber')
 
@@ -16,10 +16,11 @@ snake = Snake([(2, 3), (3, 3), (4, 3)])
 layout = [
     [game_field]
 ]
-tick = 0
+
 
 window = sg.Window('Snake', layout, return_keyboard_events=True)
 
+start_time = time()
 while True:
     event, values = window.read(timeout=30)
 
@@ -31,17 +32,17 @@ while True:
         snake.set_dir(event.split(':')[0].lower())
         print(snake.direction)
 
-    for i in range(cell_num):
-        for j in range(cell_num):
-            game_field.DrawRectangle(*pos_to_pixel(i, j), 'white')
+    cur_time = time()
+    if cur_time - start_time >= .35:
+        start_time = cur_time
+        for i in range(cell_num):
+            for j in range(cell_num):
+                game_field.DrawRectangle(*pos_to_pixel(i, j), 'white')
 
-    for segm in snake.draw_object():
-        game_field.DrawRectangle(*segm, 'green')
-    game_field.DrawRectangle(*pos_to_pixel(*snake.head), 'yellow')
+        for ind, segm in enumerate(snake.draw_object()):
+            game_field.DrawRectangle(*segm, 'green' if ind != 0 else 'yellow')
 
-
-    sleep(.15)
-    snake.move()
+        snake.move()
 
 
 window.close()
