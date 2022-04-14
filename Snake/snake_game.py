@@ -37,6 +37,8 @@ while True:
 
     for segm in snake.draw_object():
         game_field.DrawRectangle(*segm, 'green')
+    game_field.DrawRectangle(*pos_to_pixel(*snake.head), 'yellow')
+
 
     sleep(.15)
     snake.move()

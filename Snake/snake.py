@@ -6,6 +6,7 @@ class Snake:
 
     def __init__(self, segm: list[tuple], direction: str= 'right'):
         self.segm = deque(segm)
+        self.head = segm[0]
         self.direction = direction
 
     def move(self):
@@ -13,6 +14,7 @@ class Snake:
                      directions[self.direction]
         self.segm.appendleft((head[0] + dirs[0],
                               head[1] + dirs[1]))
+        self.head = self.segm[0]
         self.segm.pop()
 
     def set_dir(self, direct: str):
