@@ -2,9 +2,11 @@ from constants import *
 from collections import deque
 
 directions = {'left': (-1, 0), 'right': (1, 0), 'up': (0, 1), 'down': (0, -1)}
+
+
 class Snake:
 
-    def __init__(self, segm: list[tuple], direction: str= 'right'):
+    def __init__(self, segm: list[tuple], direction: str = 'right'):
         self.segm = deque(segm)
         self.head = segm[0]
         self.direction = direction
@@ -22,3 +24,8 @@ class Snake:
 
     def draw_object(self):
         return [pos_to_pixel(*i) for i in self.segm]
+
+
+class Apple:
+    pass
+    # TODO implement apple
