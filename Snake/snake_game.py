@@ -1,7 +1,9 @@
-import PySimpleGUI as sg
-from classes import *
-from time import sleep, time
 from random import *
+from time import time
+
+import PySimpleGUI as sg
+
+from classes import *
 
 sg.theme('DarkAmber')
 sg.set_options(font='Young 40 italic', )
@@ -15,10 +17,11 @@ game_field = sg.Graph(
 
 snake = Snake([(2, 3), (3, 3), (4, 3)])
 
-apples = [Apple(randint(0, cell_num), randint(0, cell_num)) for i in range(randint(1, 3))]
+apples = [Apple(randint(0, cell_num - 1), randint(0, cell_num - 1)) for i in range(randint(1, 3))]
 
 layout = [
     [sg.Push(), sg.Text('The Snake', justification='center'), sg.Push()],
+    [sg.Text('Current score: 0', key='-SCORE-', pad=((5, 5), (10, 10)))],
     [game_field]
 ]
 
@@ -38,8 +41,9 @@ while True:
         print(snake.direction)
 
     cur_time = time()
-    if not randint(0, 150):
-        apples.append(Apple(randint(0, cell_num), randint(0, cell_num)))
+    print(apples)
+    if not apples:
+        apples.extend([Apple(randint(0, cell_num - 1), randint(0, cell_num - 1)) for i in range(randint(1, 3))])
     if cur_time - start_time >= .25:
         start_time = cur_time
 
@@ -52,6 +56,7 @@ while True:
             game_field.DrawRectangle(*segm, 'green' if ind != 0 else 'yellow')
         snake.move()
         snake.collide(apples)
+        window['-SCORE-'].update(f'Current score: {len(snake.segm) - 3}')
 
         for apple in apples:
             game_field.DrawRectangle(*pos_to_pixel(apple.x, apple.y), 'red')
