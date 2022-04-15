@@ -18,10 +18,9 @@ class Snake:
         self.direction = direction
 
     def move(self):
-        head, dirs = self.segm[0], \
-                     directions[self.direction]
-        self.segm.appendleft((head[0] + dirs[0],
-                              head[1] + dirs[1]))
+        head, dirs = self.segm[0], directions[self.direction]
+        self.segm.appendleft((min(max(head[0] + dirs[0], 0), cell_num - 1),
+                              min(max(head[1] + dirs[1], 0), cell_num - 1)))
         self.head = self.segm[0]
         self.segm.pop()
 
