@@ -25,7 +25,6 @@ layout = [
     [game_field]
 ]
 
-
 window = sg.Window('Snake', layout, return_keyboard_events=True)
 
 start_time = time()
