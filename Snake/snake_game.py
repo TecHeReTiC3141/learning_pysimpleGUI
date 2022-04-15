@@ -12,7 +12,7 @@ game_field = sg.Graph(
     canvas_size=(field_size, field_size),
     graph_bottom_left=(0, 0),
     graph_top_right=(field_size, field_size),
-    background_color='black'
+    background_color='green'
 )
 
 snake = Snake([(2, 3), (3, 3), (4, 3)])
@@ -38,10 +38,8 @@ while True:
     elif event in ['Left:37', 'Up:38',
                    'Right:39', 'Down:40']:
         snake.set_dir(event.split(':')[0].lower())
-        print(snake.direction)
 
     cur_time = time()
-    print(apples)
     if not apples:
         apples.extend([Apple(randint(0, cell_num - 1), randint(0, cell_num - 1)) for i in range(randint(1, 3))])
     if cur_time - start_time >= .25:
