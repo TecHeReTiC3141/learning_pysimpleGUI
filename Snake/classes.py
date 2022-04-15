@@ -4,6 +4,12 @@ from collections import deque
 directions = {'left': (-1, 0), 'right': (1, 0), 'up': (0, 1), 'down': (0, -1)}
 
 
+class Apple:
+
+    def __init__(self, x, y):
+        self.x, self.y = x, y
+
+
 class Snake:
 
     def __init__(self, segm: list[tuple], direction: str = 'right'):
@@ -22,10 +28,13 @@ class Snake:
     def set_dir(self, direct: str):
         self.direction = direct
 
-    def draw_object(self):
+    def draw_object(self) -> list:
         return [pos_to_pixel(*i) for i in self.segm]
 
-
-class Apple:
-    pass
-    # TODO implement apple
+    def collide(self, apples: list[Apple]):
+        for apple in apples:
+            if self.head[0] == apple.x and self.head[1] == apple.y:
+                apples.remove(apple)
+                tail = self.segm[-1]
+                self.segm.append((tail[0] - directions[self.direction][0],
+                                  tail[1] - directions[self.direction][1]))
