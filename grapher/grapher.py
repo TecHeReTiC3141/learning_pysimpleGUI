@@ -8,9 +8,17 @@ sg.set_options(font='Ubuntu 15')
 
 def update_graph(data: list[list], function: str):
     axes = figure.axes
-    axes[0].plot([i[1] for i in data], [i[2] for i in data])
+    cop = data.copy()
+    cop.sort(key=lambda i: i[1])
+    axes[0].clear()
+    axes[0].plot([i[1] for i in cop], [i[2] for i in cop])
+    axes[0].set_title('y = ' + function)
+    axes[0].set_xlabel('X')
+    axes[0].set_ylabel('Y')
+
     figure_canv.draw()
     figure_canv.get_tk_widget().pack()
+
 
 table_content = []
 frozen = False
@@ -32,7 +40,7 @@ layout = [
     [sg.Button('Reset')]
 ]
 
-window = sg.Window('Grapher', layout, finalize=True)
+window = sg.Window('Grapher', layout, finalize=True, return_keyboard_events=True)
 
 figure = matplotlib.figure.Figure(figsize=(6, 4))
 figure.add_subplot(1, 1, 1).plot([], [])
@@ -48,19 +56,21 @@ while True:
     if event == sg.WIN_CLOSED:
         break
 
-    elif event == 'Submit':
+    elif event == 'Submit' or event == 'Enter:13':
         if not frozen:
             error_window = sg.Window('Error', layout=[[sg.Text('Please freeze formula first')]])
             error_window.read()
 
-        elif values['-INPUT-'].isdigit():
-            obs = int(values['-INPUT-'])
+        try:
+            obs = float(values['-INPUT-'])
             table_content.append((len(table_content) + 1, obs,
-                                  eval(values['-FUNCTION-'].replace('x', str(obs)))))
+                                  eval(values['-FUNCTION-'].replace('x', str(obs) if obs >= 0 else f'({obs})'))))
             window['-DATA-'].update(values=table_content)
+            window['-INPUT-'].update('')
             update_graph(table_content, values['-FUNCTION-'])
 
-        else:
+        except Exception as e:
+            print(e)
             error_window = sg.Window('Error', layout=[[sg.Text('Please insert integer and right formula')]])
             error_window.read()
 
