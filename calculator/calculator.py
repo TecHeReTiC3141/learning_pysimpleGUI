@@ -9,7 +9,8 @@ def create_themed_window(theme: str):
     def_button_size = (4, 2)
     layout = [
         [sg.Push(),
-         sg.Text('...', key='-SCREEN-', border_width=2, font='Franklin 25', pad=(5, 25), right_click_menu=themes)],
+         sg.Text('...', key='-SCREEN-', border_width=2, font='Franklin 25', pad=(5, 25),
+                 right_click_menu=themes)],
         [sg.Text('Answer', key='-ANS-')],
         [sg.Button('Enter', key='-ENTER-', size=def_button_size, expand_x=True),
          sg.Button('Clear', key='-CLEAR-', size=def_button_size, expand_x=True)],
