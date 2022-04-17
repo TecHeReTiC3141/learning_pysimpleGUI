@@ -1,6 +1,14 @@
 import PySimpleGUI as sg
 import PIL as pil
 
+image = None
+
+
+def update_image(image, blur: int, contrasr: int,
+                 flx: bool, fly: bool, emboss: bool, edges: bool):
+    pass
+
+
 sg.theme('dark')
 
 contr_col = sg.Column([
@@ -16,16 +24,21 @@ image_col = sg.Column([
 
 
 layout = [
-    [contr_col, image_col]
+    [contr_col, sg.VerticalSeparator(), image_col]
 ]
 
 window = sg.Window('ImageEditor', layout)
 
 while True:
 
-    event, values = window.read()
+    event, values = window.read(timeout=100)
 
     if event == sg.WIN_CLOSED:
         break
+
+    update_image(image, values['-BLUR-'], values['-CONTRAST-'],
+                 values['-FLIPX-'], values['-FLIPY-'],
+                 values['-EMBOSS-'], values['-EDGES-'])
+    print(values)
 
 window.close()
