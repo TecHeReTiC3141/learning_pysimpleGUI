@@ -1,17 +1,18 @@
 import PySimpleGUI as sg
 from PIL import Image, ImageFilter, ImageOps
 from io import BytesIO
-from pathlib import Path
-
 image = Image.open('sunrise_cropped.png')
 
+
+
 def open_image(image):
-    pass
+    bio = BytesIO()
+    image.save(bio, 'PNG')
+    window['-IMAGE-'].update(bio.getvalue())
 
 
 def update_image(image, blur: int, contrast: int,
                  flx: bool, fly: bool, emboss: bool, edges: bool, color: str):
-
     new_image = image.filter(ImageFilter.GaussianBlur(blur))
     new_image = new_image.filter(ImageFilter.UnsharpMask(contrast))
 
@@ -47,13 +48,12 @@ contr_col = sg.Column([
     [sg.Frame('Contrast', layout=[[sg.Slider(range=(0, 10), orientation='h', key='-CONTRAST-')]])],
     [sg.Checkbox('Flip x', key='-FLIPX-'), sg.Checkbox('Flip y', key='-FLIPY-')],
     [sg.Checkbox('Emboss', key='-EMBOSS-'), sg.Checkbox('Edges', key='-EDGES-')],
-    [sg.Button('Save image', key='-OPEN-'), sg.Button('Save image', key='-SAVE-')]
+    [sg.Button('Open image', key='-OPEN-'), sg.Button('Save image', key='-SAVE-')]
 ])
 
 image_col = sg.Column([
     [sg.Frame('Result', layout=[[sg.Image('sunrise_cropped.png', key='-IMAGE-')]])]
 ])
-
 
 layout = [
     [contr_col, sg.VerticalSeparator(), image_col]
@@ -68,16 +68,18 @@ while True:
     if event == sg.WIN_CLOSED:
         break
 
-    new_image = update_image(image, values['-BLUR-'], values['-CONTRAST-'],
-                 values['-FLIPX-'], values['-FLIPY-'],
-                 values['-EMBOSS-'], values['-EDGES-'], values['-COLORS-'])
+    cur_image = update_image(image, values['-BLUR-'], values['-CONTRAST-'],
+                             values['-FLIPX-'], values['-FLIPY-'],
+                             values['-EMBOSS-'], values['-EDGES-'], values['-COLORS-'])
 
-    if event == 'Save image':
+    if event == '-SAVE-':
         path = sg.popup_get_file('Choose where to save',
-                                      no_window=True, save_as=True) + '.png'
-        new_image.save(path, 'PNG')
+                                 no_window=True, save_as=True) + '.png'
+        cur_image.save(path, 'PNG')
 
-
-
+    elif event == '-OPEN-':
+        image = Image.open(sg.popup_get_file('Open', no_window=True)).resize((500, 375),
+                                                                             Image.Resampling.HAMMING)
+        open_image(image)
 
 window.close()
