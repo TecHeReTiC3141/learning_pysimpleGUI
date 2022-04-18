@@ -1,12 +1,16 @@
 import PySimpleGUI as sg
 from PIL import Image, ImageFilter, ImageOps
 from io import BytesIO
+from pathlib import Path
 
 image = Image.open('sunrise_cropped.png')
 
+def open_image(image):
+    pass
+
 
 def update_image(image, blur: int, contrast: int,
-                 flx: bool, fly: bool, emboss: bool, edges: bool):
+                 flx: bool, fly: bool, emboss: bool, edges: bool, color: str):
 
     new_image = image.filter(ImageFilter.GaussianBlur(blur))
     new_image = new_image.filter(ImageFilter.UnsharpMask(contrast))
@@ -19,21 +23,31 @@ def update_image(image, blur: int, contrast: int,
         new_image = new_image.filter(ImageFilter.FIND_EDGES)
     if emboss:
         new_image = new_image.filter(ImageFilter.EMBOSS)
-
+    if color != 'N':
+        r, g, b = new_image.split()
+        if color == 'R':
+            new_image = r
+        elif color == 'G':
+            new_image = g
+        else:
+            new_image = b
 
     bio = BytesIO()
     new_image.save(bio, format='PNG')
 
     window['-IMAGE-'].update(data=bio.getvalue())
+    return new_image
 
 
 sg.theme('dark')
 
 contr_col = sg.Column([
+    [sg.Frame('RGB', layout=[[sg.Spin(list('RGBN'), key='-COLORS-', initial_value='N')]], expand_x=True)],
     [sg.Frame('Blur', layout=[[sg.Slider(range=(0, 10), orientation='h', key='-BLUR-')]])],
     [sg.Frame('Contrast', layout=[[sg.Slider(range=(0, 10), orientation='h', key='-CONTRAST-')]])],
     [sg.Checkbox('Flip x', key='-FLIPX-'), sg.Checkbox('Flip y', key='-FLIPY-')],
     [sg.Checkbox('Emboss', key='-EMBOSS-'), sg.Checkbox('Edges', key='-EDGES-')],
+    [sg.Button('Save image', key='-OPEN-'), sg.Button('Save image', key='-SAVE-')]
 ])
 
 image_col = sg.Column([
@@ -54,8 +68,16 @@ while True:
     if event == sg.WIN_CLOSED:
         break
 
-    update_image(image, values['-BLUR-'], values['-CONTRAST-'],
+    new_image = update_image(image, values['-BLUR-'], values['-CONTRAST-'],
                  values['-FLIPX-'], values['-FLIPY-'],
-                 values['-EMBOSS-'], values['-EDGES-'])
+                 values['-EMBOSS-'], values['-EDGES-'], values['-COLORS-'])
+
+    if event == 'Save image':
+        path = sg.popup_get_file('Choose where to save',
+                                      no_window=True, save_as=True) + '.png'
+        new_image.save(path, 'PNG')
+
+
+
 
 window.close()
