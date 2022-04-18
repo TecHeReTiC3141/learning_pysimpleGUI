@@ -1,12 +1,30 @@
 import PySimpleGUI as sg
-import PIL as pil
+from PIL import Image, ImageFilter, ImageOps
+from io import BytesIO
 
-image = None
+image = Image.open('sunrise_cropped.png')
 
 
-def update_image(image, blur: int, contrasr: int,
+def update_image(image, blur: int, contrast: int,
                  flx: bool, fly: bool, emboss: bool, edges: bool):
-    pass
+
+    new_image = image.filter(ImageFilter.GaussianBlur(blur))
+    new_image = new_image.filter(ImageFilter.UnsharpMask(contrast))
+
+    if flx:
+        new_image = ImageOps.mirror(new_image)
+    if fly:
+        new_image = ImageOps.flip(new_image)
+    if edges:
+        new_image = new_image.filter(ImageFilter.FIND_EDGES)
+    if emboss:
+        new_image = new_image.filter(ImageFilter.EMBOSS)
+
+
+    bio = BytesIO()
+    new_image.save(bio, format='PNG')
+
+    window['-IMAGE-'].update(data=bio.getvalue())
 
 
 sg.theme('dark')
@@ -19,7 +37,7 @@ contr_col = sg.Column([
 ])
 
 image_col = sg.Column([
-    [sg.Frame('Result', layout=[[sg.Image('sunrise_cropped.png')]])]
+    [sg.Frame('Result', layout=[[sg.Image('sunrise_cropped.png', key='-IMAGE-')]])]
 ])
 
 
@@ -39,6 +57,5 @@ while True:
     update_image(image, values['-BLUR-'], values['-CONTRAST-'],
                  values['-FLIPX-'], values['-FLIPY-'],
                  values['-EMBOSS-'], values['-EDGES-'])
-    print(values)
 
 window.close()
