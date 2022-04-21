@@ -4,33 +4,38 @@ from pytube import YouTube
 sg.theme('Darkred')
 
 info_tab = [
-    [sg.Text('Title: ', key='-TITLE-')],
-    [sg.Text('Views: ', key='-VIEWS-'), ],
-    [sg.Text('Length: ', key='-LEN-'), ],
-    [sg.Text('Author: ', key='-AUTHOR-'), ],
-    [sg.Text('Description: ', key='-DESCR-'),
-     sg.Multiline(default_text='Choose video to download', no_scrollbar=True, disabled=True)],
+    [sg.Text('Title:'), sg.Text('', key='-TITLE-')],
+    [sg.Text('Views:'), sg.Text('', key='-VIEWS-'), ],
+    [sg.Text('Length:'), sg.Text('', key='-LEN-'), ],
+    [sg.Text('Author:'), sg.Text('', key='-AUTHOR-'), ],
+    [sg.Text('Description: '),
+     sg.Multiline(default_text='Choose video to download', no_scrollbar=True, disabled=True, expand_x=True,
+                  expand_y=True, key='-DESCR-')],
 ]
 
 down_tab = [
-    [sg.Frame('Best quality', [[sg.Button('Download', key='-DOWNBEST-')]])],
-    [sg.Frame('Worst quality', [[sg.Button('Download', key='-DOWNWORST-')]])],
-    [sg.Frame('Audio quality', [[sg.Button('Download', key='-AUDIOONLY-')]])],
-    [sg.Progress(100, expand_x=True, size=(20, 20), pad=((10, 10), (5, 5)))]
+    [sg.Frame('Best quality', [[sg.Button('Download', key='-DOWNBEST-'), sg.Text('', key='-BESTSIZE-')]])],
+    [sg.Frame('Worst quality', [[sg.Button('Download', key='-DOWNWORST-'), sg.Text('', key='-WORSTSIZE-')]])],
+    [sg.Frame('Audio quality', [[sg.Button('Download', key='-AUDIOONLY-'), sg.Text('', key='-AUDIOSIZE-')]])],
+    [sg.Progress(100, expand_x=True, size=(20, 20),
+                 pad=((10, 10), (5, 5)),
+                 key='-PROGRESS-')]
 ]
 
-# TODO set keys to elements
+start_layout = [
+    [sg.Input('', key='-INPUT-'), sg.Button('Submit')]
+]
 
 layout = [
     [sg.Text('YouTube Downloader', font='Young 35')],
     [sg.HorizontalSeparator()],
     [sg.TabGroup([[
-        sg.Tab('info', info_tab, expand_x=True),
-        sg.Tab('download', down_tab, expand_x=True),
+        sg.Tab('info', info_tab, expand_x=True, expand_y=True),
+        sg.Tab('download', down_tab, expand_x=True, expand_y=True),
     ]])]
 ]
 
-window = sg.Window('Youtube Downloader', layout)
+window = sg.Window('Insert ref to video', start_layout)
 
 while True:
 
@@ -38,5 +43,16 @@ while True:
 
     if event == sg.WIN_CLOSED:
         break
+
+    elif event == 'Submit':
+        video = YouTube(values['-INPUT-'])
+        window.close()
+
+        window = sg.Window('Youtube Downloader', layout, finalize=True)
+        window['-TITLE-'].update(video.title)
+        window['-VIEWS-'].update(video.views)
+        window['-LEN-'].update(f'{round(video.length / 60, 2)} mins')
+        window['-AUTHOR-'].update(video.author)
+        window['-DESCR-'].update(video.description)
 
 window.close()
