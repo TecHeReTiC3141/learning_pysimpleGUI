@@ -45,14 +45,21 @@ while True:
         break
 
     elif event == 'Submit':
-        video = YouTube(values['-INPUT-'])
-        window.close()
+        try:
+            video = YouTube(values['-INPUT-'])
+            window.close()
 
-        window = sg.Window('Youtube Downloader', layout, finalize=True)
-        window['-TITLE-'].update(video.title)
-        window['-VIEWS-'].update(video.views)
-        window['-LEN-'].update(f'{round(video.length / 60, 2)} mins')
-        window['-AUTHOR-'].update(video.author)
-        window['-DESCR-'].update(video.description)
+            window = sg.Window('Youtube Downloader', layout, finalize=True)
+            window['-TITLE-'].update(video.title)
+            window['-VIEWS-'].update(video.views)
+            window['-LEN-'].update(f'{round(video.length / 60, 2)} mins')
+            window['-AUTHOR-'].update(video.author)
+            window['-DESCR-'].update(video.description)
 
+            window['-BESTSIZE-'].update(f'{video.streams.get_highest_resolution().filesize / 2 ** 23} MB')
+            window['-WORSTSIZE-'].update(f'{video.streams.get_lowest_resolution().filesize / 2 ** 23} MB')
+            window['-AUDIOSIZE-'].update(f'{video.streams.get_audio_only().filesize / 2 ** 23} MB')
+        except Exception as e:
+            print(e)
+            sg.popup('Please, enter a valid ref', title='Error')
 window.close()
