@@ -1,7 +1,7 @@
 import PySimpleGUI as sg
 from pytube import YouTube
 
-sg.theme('Darkred')
+sg.theme('Darkred1')
 
 info_tab = [
     [sg.Text('Title:'), sg.Text('', key='-TITLE-')],
