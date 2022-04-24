@@ -1,8 +1,21 @@
 import PySimpleGUI as sg
 from bs4 import BeautifulSoup
+import requests as req
 from PIL import Image, ImageTk
+from time import sleep
 
 sg.theme('BlueMono')
+
+def get_data(location: str):
+    sleep(5)
+    session = req.Session()
+    session.headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36'
+    request = session.get(f'https://www.google.com/search?q=weather+{location.lower().replace(" ", "")}')
+    soup = BeautifulSoup(request.text, 'lxml')
+    print(soup.prettify())
+    assert request.status_code == 200, f'Problems with request: {request.status_code}'
+
+    return soup.select_one('div.VQF4g div.wob_loc').text
 
 def update_image(filename: str, key: str, size: tuple):
     im = Image.open(filename).resize(size, Image.Resampling.BICUBIC)
@@ -39,5 +52,10 @@ while True:
         window['-TIME-'].update(visible=True)
         window['-TEMP-'].update(visible=True)
         update_image('images/sunny.png', '-WEATHER-', (350, 350))
+        try:
+            print(get_data(values['-INPUT-']))
+        except AssertionError as e:
+            print(e)
+
 
 window.close()
