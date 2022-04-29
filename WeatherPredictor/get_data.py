@@ -11,3 +11,5 @@ def get_weather_data(city: str) -> dict:
     data = json.loads(req.text)['list'][0]
     pprint(data)
     return data
+
+# TODO read OWM documentation and that article

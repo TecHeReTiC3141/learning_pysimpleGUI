@@ -39,15 +39,16 @@ while True:
     elif event == 'Submit':
         try:
             data = get_weather_data(values['-INPUT-'])
-        except AssertionError:
-            sg.popup('Please enter correct place!')
+            window['-LOC-'].update(value=f"{data['name']}, {data['sys']['country']}", visible=True)
+            window['-DESCR-'].update(value=data['weather'][0]['main'], visible=True)
+            window['-TEMP-'].update(value=f"Temp: {data['main']['feels_like']}\u2103", visible=True)
+            window['-WEATHER-'].update(visible=True)
+            # TODO update images
+            update_image('images/sunny.png', '-WEATHER-', (350, 350))
+        except Exception as e:
+            sg.popup(f'{e} Please enter correct place!')
 
-        window['-LOC-'].update(value=f"{data['name']}, {data['sys']['country']}", visible=True)
-        window['-DESCR-'].update(value=data['weather'][0]['main'], visible=True)
-        window['-TEMP-'].update(value=f"Temp: {data['main']['feels_like']}°", visible=True)
-        window['-WEATHER-'].update(visible=True)
 
-        update_image('images/sunny.png', '-WEATHER-', (350, 350))
 
 
 window.close()
