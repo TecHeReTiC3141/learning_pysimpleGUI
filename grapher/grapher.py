@@ -2,6 +2,7 @@ import PySimpleGUI as sg
 import matplotlib
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import numpy as np
+from math import *
 
 sg.theme('DarkAmber')
 sg.set_options(font='Ubuntu 15')
@@ -12,6 +13,7 @@ def update_scatter(data: list[tuple], function: str):
     cop = data.copy()
     cop.sort(key=lambda i: i[1])
     axes[0].clear()
+    axes[0].grid()
     axes[0].plot([i[1] for i in cop], [i[2] for i in cop])
     axes[0].set_title('y = ' + function)
     figure.axes[0].set_xlabel('X')
@@ -27,12 +29,12 @@ def update_range(expr: str, data: list[tuple], x0: int, x1: int, step: float):
     print(f'y - {y_data}')
 
     # TODO fill tables correctly in numpy-like style
-    for x in list(zip([x_data, y_data])):
-        print(x)
-        data.append((len(data) + 1, x, y))
+    for x, y in np.stack([x_data, y_data], axis=1):
+        data.append((len(data) + 1, round(x, 2), round(y, 2)))
 
     axe = figure.axes[0]
     axe.clear()
+    axe.grid()
     axe.plot(x_data, y_data)
     axe.set_title('y = ' + expr)
     figure.axes[0].set_xlabel('X')
@@ -67,12 +69,12 @@ layout = [
     [sg.HorizontalSeparator()],
     [sg.Text('Insert formula in terms of x:', font='Ubuntu 20 underline')],
     [sg.Input(expand_x=True, key='-FUNCTION-', default_text='Smth like x ** 2 + 1 - 3 * x', ),
-     sg.Button('Freeze formula')],
+     sg.Button('Freeze formula', key='-FREEZE-')],
     [sg.Table(headings=['Index', 'Observation', 'Result'],
               values=table_content,
               expand_x=True,
               hide_vertical_scroll=True,
-              key='-DATA-', )],
+              key='-DATA-')],
     [sg.TabGroup(layout=[
         [scatter_tab, range_tab]
     ], key='-GROUP-')],
@@ -81,6 +83,8 @@ layout = [
 ]
 
 window = sg.Window('Grapher', layout, finalize=True, return_keyboard_events=True)
+sg.popup('TecGrapher is a simple GUI-app created to plot any function\n which can be expressed by Python syntax',
+         title='Intro', no_titlebar=True)
 
 figure = matplotlib.figure.Figure(figsize=(6, 4))
 figure.add_subplot(1, 1, 1).plot([], [])
@@ -101,7 +105,7 @@ while True:
     elif event == '-SUBMITSCAT-':
         if not frozen:
             sg.popup('Please freeze formula first', title='Error')
-
+            continue
 
         try:
             obs = float(values['-INPUT-'])
@@ -122,7 +126,8 @@ while True:
 
         x, y, step = float(values['-X0-']), float(values['-X1-']), float(values['-STEP-'])
         if x and y and step:
-
+            table_content = []
+            window['-DATA-'].update(values=table_content)
             update_range(values['-FUNCTION-'], table_content, x, y, step)
             window['-DATA-'].update(values=table_content)
             window['-X0-'].update('')
@@ -133,18 +138,22 @@ while True:
             sg.popup('Please enter x, y and step', title='Error')
 
 
-    elif event == 'Freeze formula':
+    elif event == '-FREEZE-':
         frozen = True
         window['-FUNCTION-'].update(disabled=True, text_color='black')
+        window['-FREEZE-'].update(disabled=True)
 
     elif event == 'Reset':
         frozen = False
         window['-FUNCTION-'].update(disabled=False,
-                                    value='Smth like x ** 2 + 1 - 3 * x')
-        window['-INPUT-'].update(value='')
+                                   text_color='orange')
+        window['-INPUT-'].update(value='',)
         table_content = []
         window['-DATA-'].update(values=table_content)
+
         figure.axes[0].clear()
+
+        window['-FREEZE-'].update(disabled=False)
 
 
 window.close()
