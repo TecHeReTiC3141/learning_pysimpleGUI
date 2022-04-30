@@ -49,6 +49,4 @@ while True:
             sg.popup(f'{e} Please enter correct place!')
 
 
-
-
 window.close()
