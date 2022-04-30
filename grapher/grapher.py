@@ -9,6 +9,8 @@ sg.theme('DarkAmber')
 sg.set_options(font='Ubuntu 15')
 
 
+
+
 def update_scatter(data: list[tuple], function: str):
     axes = figure.axes
     cop = data.copy()
@@ -48,6 +50,7 @@ def update_range(expr: str, data: list[tuple], x0: int, x1: int, step: float):
 
 table_content = []
 frozen = False
+x0 = x1 = step = None
 
 scatter_tab = sg.Tab('Scatter', layout=[
     [sg.Text('Insert value:', font='Ubuntu 20 underline')],
@@ -128,7 +131,7 @@ while True:
             continue
 
         x, y, step = float(values['-X0-']), float(values['-X1-']), float(values['-STEP-'])
-        if x and y and step:
+        if x is not None and y is not None and step is not None:
             table_content = []
             window['-DATA-'].update(values=table_content)
             update_range(values['-FUNCTION-'], table_content, x, y, step)
@@ -148,6 +151,7 @@ while True:
 
     elif event == 'Reset':
         frozen = False
+        x0 = x1 = step = None
         window['-FUNCTION-'].update(disabled=False,
                                    text_color='orange')
         window['-INPUT-'].update(value='',)
@@ -159,7 +163,17 @@ while True:
         window['-FREEZE-'].update(disabled=False)
 
     elif event == 'Save plot':
-        pass
+        if not frozen:
+            sg.popup('Please freeze formula first', title='Error')
 
+        elif not table_content:
+            sg.popup('Please plot some data first', title='Error')
+        else:
+            try:
+                path = sg.popup_get_file('', no_window=True, save_as=True)
+                figure.savefig(path)
+                sg.popup(f'Plot of y = {values["-FUNCTION-"]} has been saved successfully!')
+            except Exception:
+                sg.popup('Some problems with saving occurred', title='Error')
 
 window.close()
