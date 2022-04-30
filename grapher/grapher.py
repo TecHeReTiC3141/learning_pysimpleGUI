@@ -3,6 +3,7 @@ import matplotlib
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import numpy as np
 from math import *
+from sys import stdout
 
 sg.theme('DarkAmber')
 sg.set_options(font='Ubuntu 15')
@@ -18,6 +19,7 @@ def update_scatter(data: list[tuple], function: str):
     axes[0].set_title('y = ' + function)
     figure.axes[0].set_xlabel('X')
     figure.axes[0].set_ylabel('Y')
+
     figure_canv.draw()
     figure_canv.get_tk_widget().pack()
 
@@ -39,6 +41,7 @@ def update_range(expr: str, data: list[tuple], x0: int, x1: int, step: float):
     axe.set_title('y = ' + expr)
     figure.axes[0].set_xlabel('X')
     figure.axes[0].set_ylabel('Y')
+
     figure_canv.draw()
     figure_canv.get_tk_widget().pack()
 
@@ -79,7 +82,7 @@ layout = [
         [scatter_tab, range_tab]
     ], key='-GROUP-')],
     [sg.Canvas(key='-CANVAS-')],
-    [sg.Button('Reset')]
+    [sg.Button('Reset'), sg.Push(), sg.Button('Save plot', button_color='green')]
 ]
 
 window = sg.Window('Grapher', layout, finalize=True, return_keyboard_events=True)
@@ -154,6 +157,9 @@ while True:
         figure.axes[0].clear()
 
         window['-FREEZE-'].update(disabled=False)
+
+    elif event == 'Save plot':
+        pass
 
 
 window.close()
