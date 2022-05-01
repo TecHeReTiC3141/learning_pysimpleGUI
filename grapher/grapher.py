@@ -9,8 +9,6 @@ sg.theme('DarkAmber')
 sg.set_options(font='Ubuntu 15')
 
 
-
-
 def update_scatter(data: list[tuple], function: str):
     axes = figure.axes
     cop = data.copy()
@@ -28,7 +26,7 @@ def update_scatter(data: list[tuple], function: str):
 
 def update_range(expr: str, data: list[tuple], x0: int, x1: int, step: float):
     x_data = np.linspace(x0, x1, round((x1 - x0) // step))
-    y_data = np.array(list(map(lambda i: eval(expr.replace('x', str(i))), x_data)))
+    y_data = np.array(list(map(lambda i: eval(expr.replace('X', str(i))), x_data)))
     print(f'x - {x_data}')
     print(f'y - {y_data}')
 
@@ -73,13 +71,12 @@ range_tab = sg.Tab('Range', layout=[
 layout = [
     [sg.Text('TecGrapher', font='Young 40 italic')],
     [sg.HorizontalSeparator()],
-    [sg.Text('Insert formula in terms of x:', font='Ubuntu 20 underline')],
+    [sg.Text('Insert formula in terms of X:', font='Ubuntu 20 underline')],
     [sg.Input(expand_x=True, key='-FUNCTION-', default_text='Smth like x ** 2 + 1 - 3 * x', ),
      sg.Button('Freeze formula', key='-FREEZE-')],
     [sg.Table(headings=['Index', 'Observation', 'Result'],
               values=table_content,
               expand_x=True,
-              hide_vertical_scroll=True,
               key='-DATA-')],
     [sg.TabGroup(layout=[
         [scatter_tab, range_tab]
@@ -89,7 +86,8 @@ layout = [
 ]
 
 window = sg.Window('Grapher', layout, finalize=True, return_keyboard_events=True)
-sg.popup('TecGrapher is a simple GUI-app created to plot any function\n which can be expressed by Python syntax',
+sg.popup('TecGrapher is a simple GUI-app created to plot any function\n which can be expressed by Python syntax\n'
+         'Please write X in formula, it is very important',
          title='Intro', no_titlebar=True)
 
 figure = matplotlib.figure.Figure(figsize=(6, 4))
@@ -116,7 +114,7 @@ while True:
         try:
             obs = float(values['-INPUT-'])
             table_content.append((len(table_content) + 1, obs,
-                                  eval(values['-FUNCTION-'].replace('x', str(obs) if obs >= 0 else f'({obs})'))))
+                                  eval(values['-FUNCTION-'].replace('X', str(obs) if obs >= 0 else f'({obs})'))))
             window['-DATA-'].update(values=table_content)
             window['-INPUT-'].update('')
             update_scatter(table_content, values['-FUNCTION-'])
@@ -145,9 +143,14 @@ while True:
 
 
     elif event == '-FREEZE-':
-        frozen = True
-        window['-FUNCTION-'].update(disabled=True, text_color='black')
-        window['-FREEZE-'].update(disabled=True)
+        try:
+            eval(values['-FUNCTION-'].replace('X', '1'))
+            frozen = True
+            window['-FUNCTION-'].update(disabled=True, text_color='black')
+            window['-FREEZE-'].update(disabled=True)
+        except Exception:
+            sg.Popup('Please write a correct formula\nwhich matches python syntax')
+
 
     elif event == 'Reset':
         frozen = False
@@ -172,8 +175,7 @@ while True:
             try:
                 path = sg.popup_get_file('', no_window=True, save_as=True)
                 figure.savefig(path)
-                sg.popup(f'Plot of y = {values["-FUNCTION-"]} has been saved successfully!')
+                sg.popup(f'Plot of y = {values["-FUNCTION-"]} has been saved successfully!', title='Success')
             except Exception:
                 sg.popup('Some problems with saving occurred', title='Error')
-
 window.close()
