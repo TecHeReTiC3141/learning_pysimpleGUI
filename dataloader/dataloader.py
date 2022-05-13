@@ -1,30 +1,37 @@
 import PySimpleGUI as sg
 import pandas as pd
 
-data = [[]]
+data, headings = pd.DataFrame(), []
 sg.theme('DarkAmber')
 sg.set_options(font='Ubuntu 15')
+formats = ['format', ['*.csv', '*.xlsx']]
 
-table = sg.Table(values=data, key='-DATA-', expand_x=True, auto_size_columns=True)
+def create_window(data: pd.DataFrame) -> sg.Window:
 
-data_tab = sg.Tab('Data',
-                  layout=[
+    table = sg.Table(values=data.values.tolist(), headings=data.columns.values.tolist(), key='-DATA-', expand_x=True, auto_size_columns=True)
 
-                      [sg.Text('Write query to data:')],
-                      [sg.Input(key='-MAKEQUERY-'), sg.Button('Query')]
-                  ])
+    data_tab = sg.Tab('Data',
+                      layout=[
 
-load_tab = sg.Tab('Load', layout=[
-    [sg.Button('Load data')]
-])
+                          [sg.Text('Write query to data:')],
+                          [sg.Input(key='-MAKEQUERY-', expand_x=True), sg.Button('Query')]
+                      ], key='-DATATAB-', expand_x=True)
 
-layout = [
-    [sg.Text('DataLoader', font='Ubuntu 25 italic')],
-    [sg.TabGroup([[data_tab, load_tab]])],
-    [table],
-]
+    load_tab = sg.Tab('Load', layout=[
+        [sg.Button('Load data', right_click_menu=formats)]
+    ], expand_x=True)
 
-window = sg.Window('DataLoader', layout=layout)
+    layout = [
+        [sg.Text('DataLoader', font='Ubuntu 25 italic')],
+        [sg.TabGroup([[data_tab, load_tab]])],
+        [table],
+    ]
+
+
+    window = sg.Window('DataLoader', layout=layout)
+    return window
+
+window = create_window(data)
 
 while True:
     event, values = window.read()
@@ -36,10 +43,14 @@ while True:
         try:
             filepath = sg.popup_get_file('', no_window=True, )
             data = pd.read_csv(filepath)
-            print(data)
-            window['-DATA-'].update(values=data.values.tolist(), )
+            window.close()
+
+            window = create_window(data)
+            print(window)
+            print(headings, data.columns.values)
             print(window['-DATA-'].Values[0], len(window['-DATA-'].Values))
         except Exception as e:
+            print(e)
             sg.popup(str(e))
 
 window.close()
