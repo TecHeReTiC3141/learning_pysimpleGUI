@@ -5,6 +5,7 @@ data, headings = pd.DataFrame(), []
 sg.theme('DarkAmber')
 sg.set_options(font='Ubuntu 15')
 formats = ['format', ['*.csv', '*.xlsx']]
+cur_format = '*.csv'
 
 def create_window(data: pd.DataFrame) -> sg.Window:
 
@@ -18,17 +19,20 @@ def create_window(data: pd.DataFrame) -> sg.Window:
                       ], key='-DATATAB-', expand_x=True)
 
     load_tab = sg.Tab('Load', layout=[
-        [sg.Button('Load data', right_click_menu=formats)]
+        [sg.Button('Load data', right_click_menu=formats), sg.Text(f'Current format: {cur_format}', key='-CURFORM-')]
     ], expand_x=True)
 
     layout = [
         [sg.Text('DataLoader', font='Ubuntu 25 italic')],
         [sg.TabGroup([[data_tab, load_tab]])],
+
+        [sg.HorizontalSeparator()],
+        [sg.Text('Data')],
         [table],
     ]
 
 
-    window = sg.Window('DataLoader', layout=layout)
+    window = sg.Window('DataLoader', layout=layout, element_justification='center')
     return window
 
 window = create_window(data)
@@ -38,6 +42,11 @@ while True:
 
     if event == sg.WIN_CLOSED:
         break
+
+    elif event in formats[1]:
+        cur_format = event
+        window['-CURFORM-'].update(f'Current format: {cur_format}')
+
 
     elif event == 'Load data':
         try:
@@ -52,5 +61,8 @@ while True:
         except Exception as e:
             print(e)
             sg.popup(str(e))
+
+    elif event == 'Query':
+        pass
 
 window.close()
