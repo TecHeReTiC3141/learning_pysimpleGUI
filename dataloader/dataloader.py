@@ -1,5 +1,6 @@
 import PySimpleGUI as sg
 import pandas as pd
+import numpy as np
 
 data, queried = pd.DataFrame(), pd.DataFrame()
 query = False
@@ -11,8 +12,9 @@ cur_format = '*.csv'
 
 
 def create_window(data: pd.DataFrame) -> sg.Window:
-    table = sg.Table(values=data.values.tolist(),
-                     headings=data.columns.values.tolist(), key='-DATA-', expand_x=True, auto_size_columns=True)
+    table = sg.Table(values=np.hstack((np.array(range(1, data.shape[0] + 1)).reshape((data.shape[0], 1)), data.values)).tolist(),
+                     headings=['Id'] + data.columns.values.tolist(), max_col_width=45,
+                     key='-DATA-', expand_x=True, auto_size_columns=True, enable_events=True)
 
     data_tab = sg.Tab('Data',
                       layout=[
@@ -85,5 +87,8 @@ while True:
     elif event == 'Reset':
         window.close()
         window = create_window(data)
+
+    elif event == '-DATA-':
+        print(values[event])
 
 window.close()
