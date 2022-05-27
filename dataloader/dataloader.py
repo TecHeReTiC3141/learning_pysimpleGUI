@@ -12,7 +12,7 @@ from_formats = ['format', ['*.csv', '*.xlsx']]
 to_formats = ['formats', ['to .csv', 'to .xlsx']]
 cur_format = '*.csv'
 
-# TODO create tab with data stats (pandas.describe)
+# TODO create tab with data categorical stats (pandas.describe)
 # TODO implement saving of data and queries
 # TODO learn more about getting and changing certain rows
 def create_window(data: pd.DataFrame) -> sg.Window:
@@ -46,6 +46,8 @@ def create_window(data: pd.DataFrame) -> sg.Window:
                                          headings=['Column'] + numer_descr.columns.tolist())]
                            ])
 
+        features = [['all']] + [[i] for i in data.columns.tolist()]
+
         tabs = sg.TabGroup([
             [data_tab, load_tab],
             [num_stats_tab]
@@ -55,9 +57,14 @@ def create_window(data: pd.DataFrame) -> sg.Window:
             [data_tab, load_tab],
         ])
 
+        features = [['Nothing here']]
+
     layout = [
         [sg.Text('DataLoader', font='Ubuntu 25 italic')],
-        [tabs],
+        [sg.Column(layout=[
+            [sg.Text('Choose features')],
+            [sg.Table(values=features, enable_events=True, headings=['Column'], key='-COLUMNS-')]
+        ]), sg.VerticalSeparator(), sg.Column(layout=[[tabs]])],
 
         [sg.HorizontalSeparator()],
         [sg.Text(f'Data {data.shape[0]} rows x {data.shape[1]} columns')],
