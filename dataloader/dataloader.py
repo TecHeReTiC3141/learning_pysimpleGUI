@@ -15,8 +15,13 @@ cur_format = '*.csv'
 # TODO create tab with data categorical stats (pandas.describe)
 # TODO implement saving of data and queries
 # TODO learn more about getting and changing certain rows
-def create_window(data: pd.DataFrame) -> sg.Window:
-    table = sg.Table(values=np.hstack((np.array(range(1, data.shape[0] + 1)).reshape((data.shape[0], 1)), data.values)).tolist(),
+def create_window(data: pd.DataFrame, all_data: pd.DataFrame, columns='all') -> sg.Window:
+    if isinstance(columns, list):
+        values = np.hstack((np.array(range(1, data.shape[0] + 1)).reshape((data.shape[0], 1)), data.iloc[:, columns].values)).tolist()
+    else:
+        values = np.hstack((np.array(range(1, data.shape[0] + 1)).reshape((data.shape[0], 1)), data.values)).tolist()
+
+    table = sg.Table(values=values,
                      headings=['Id'] + data.columns.values.tolist(), max_col_width=35,
                      key='-DATA-', expand_x=True, auto_size_columns=True, enable_events=True)
 
@@ -26,7 +31,7 @@ def create_window(data: pd.DataFrame) -> sg.Window:
                           [sg.Input(key='-MAKEQUERY-', expand_x=True), sg.Button('Query'), sg.Button('Reset')]
                       ], key='-DATATAB-', expand_x=True)
 
-    load_tab = sg.Tab('Load', layout=[
+    load_tab = sg.Tab('Load and save', layout=[
         [sg.Button('Load data', right_click_menu=from_formats), sg.Text(f'Current format: {cur_format}', key='-CURFORM-')],
         [sg.Button('Save data', right_click_menu=to_formats), sg.Text(f'Current format: {cur_format}', key='-CURFORM-')]
     ], expand_x=True)
@@ -46,7 +51,7 @@ def create_window(data: pd.DataFrame) -> sg.Window:
                                          headings=['Column'] + numer_descr.columns.tolist())]
                            ])
 
-        features = [['all']] + [[i] for i in data.columns.tolist()]
+        features = [['all']] + [[i] for i in all_data.columns.tolist()]
 
         tabs = sg.TabGroup([
             [data_tab, load_tab],
@@ -75,7 +80,7 @@ def create_window(data: pd.DataFrame) -> sg.Window:
     return window
 
 
-window = create_window(data)
+window = create_window(data, data)
 
 while True:
     event, values = window.read()
@@ -93,13 +98,26 @@ while True:
             data = pd.read_csv(filepath)
             window.close()
 
-            window = create_window(data)
+            window = create_window(data, data)
             print(window)
             print(data.columns.values)
             print(window['-DATA-'].Values[0], len(window['-DATA-'].Values))
         except Exception as e:
             print(e)
             sg.popup(str(e))
+
+    elif event == 'Save data':
+        try:
+            filepath = sg.popup_get_file('', no_window=True, save_as=True)
+            if not filepath.endswith('.csv'):
+                filepath += '.csv'
+            if is_query:
+                queried.to_csv(filepath, index=False)
+            else:
+                data.to_csv(filepath, index=False)
+        except Exception as e:
+            sg.popup_error(str(e))
+
 
     elif event == 'Query':
         try:
@@ -108,7 +126,7 @@ while True:
                 queried = data.query(query)
 
                 window.close()
-                window = create_window(queried)
+                window = create_window(queried, data)
                 window['-MAKEQUERY-'].update(query)
                 is_query = True
             else:
@@ -120,10 +138,27 @@ while True:
 
     elif event == 'Reset':
         window.close()
-        window = create_window(data)
+        window = create_window(data, data)
         is_query = False
 
     elif event == '-DATA-':
         print(values[event])
+
+    elif event == '-COLUMNS-':
+        if 0 in values[event]:
+            window.close()
+            if is_query:
+                window = create_window(queried, data)
+            else:
+                window = create_window(data, data)
+        else:
+            cols = [i - 1 for i in values[event]]
+            window.close()
+            if is_query:
+                window = create_window(queried, data, cols)
+            else:
+                window = create_window(data, data, cols)
+
+
 
 window.close()
