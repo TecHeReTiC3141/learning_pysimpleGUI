@@ -2,7 +2,7 @@ import PySimpleGUI as sg
 import pandas as pd
 import numpy as np
 
-data, queried = pd.DataFrame(), pd.DataFrame()
+data, queried = pd.read_csv('titanic.csv'), pd.DataFrame()
 pd.set_option("display.precision", 3)
 
 is_query = False
@@ -12,12 +12,14 @@ from_formats = ['format', ['*.csv', '*.xlsx']]
 to_formats = ['formats', ['to .csv', 'to .xlsx']]
 cur_format = '*.csv'
 
+
 # TODO create tab with data categorical stats (pandas.describe)
 # TODO implement saving of data and queries
 # TODO learn more about getting and changing certain rows
 def create_window(data: pd.DataFrame, all_data: pd.DataFrame, columns='all') -> sg.Window:
     if isinstance(columns, list):
-        values = np.hstack((np.array(range(1, data.shape[0] + 1)).reshape((data.shape[0], 1)), data.iloc[:, columns].values)).tolist()
+        values = np.hstack(
+            (np.array(range(1, data.shape[0] + 1)).reshape((data.shape[0], 1)), data.iloc[:, columns].values)).tolist()
     else:
         values = np.hstack((np.array(range(1, data.shape[0] + 1)).reshape((data.shape[0], 1)), data.values)).tolist()
 
@@ -27,52 +29,83 @@ def create_window(data: pd.DataFrame, all_data: pd.DataFrame, columns='all') -> 
 
     data_tab = sg.Tab('Data',
                       layout=[
-                          [sg.Text('Write query to data:')],
-                          [sg.Input(key='-MAKEQUERY-', expand_x=True), sg.Button('Query'), sg.Button('Reset')]
+                          [sg.T('Write query to data:')],
+                          [sg.Input(key='-MAKEQUERY-', expand_x=True), sg.B('Query'), sg.B('Reset')]
                       ], key='-DATATAB-', expand_x=True)
 
     load_tab = sg.Tab('Load and save', layout=[
-        [sg.Button('Load data', right_click_menu=from_formats), sg.Text(f'Current format: {cur_format}', key='-CURFORM-')],
-        [sg.Button('Save data', right_click_menu=to_formats), sg.Text(f'Current format: {cur_format}', key='-CURFORM-')]
+        [sg.B('Load data', right_click_menu=from_formats), sg.T(f'Current format: {cur_format}', key='-CURFORM-')],
+        [sg.B('Save data', right_click_menu=to_formats), sg.T(f'Current format: {cur_format}', key='-CURFORM-')]
     ], expand_x=True)
 
     if data.shape[1] > 0:
-        numer_descr = data.describe().round(3).T
+        num_cols, cat_cols = [], []
+        for col in data.columns:
+            if data[col].dtype == np.object or data[col].nunique() <= 5:
+                cat_cols.append(col)
+            else:
+                num_cols.append(col)
+        numer_descr = data[num_cols].describe().round(3).T
+        cater_descr = data[cat_cols].describe(include=['object', 'float64', 'int']).round(3).T[['count', 'freq',
+                                                                                                'unique', 'top', 'mean']]
+
         print(numer_descr)
 
         print(numer_descr.index.to_numpy().reshape(numer_descr.shape[0], 1), numer_descr.values)
 
         num_stats_tab = sg.Tab('Numeric Stats',
-                           layout=[
-                               [sg.Text('Numeric features description')],
-                               [sg.HorizontalSeparator()],
-                               [sg.Table(values=np.hstack([numer_descr.index.to_numpy().reshape(numer_descr.shape[0], 1),
-                                                           numer_descr.values]).tolist(),
-                                         headings=['Column'] + numer_descr.columns.tolist())]
-                           ])
+                               layout=[
+                                   [sg.T('Numeric features description')],
+                                   [sg.HSep()],
+                                   [sg.Table(
+                                       values=np.hstack([numer_descr.index.to_numpy().reshape(numer_descr.shape[0], 1),
+                                                         numer_descr.values]).tolist(),
+                                       headings=['Column'] + numer_descr.columns.tolist())]
+                               ])
 
-        features = [['all']] + [[i] for i in all_data.columns.tolist()]
+        cat_stats_tab = sg.Tab('Caterogical Stats',
+                               layout=[
+                                   [sg.T('Categorical features description')],
+                                   [sg.HSep()],
+                                   [sg.Table(
+                                       values=np.hstack([cater_descr.index.to_numpy().reshape(cater_descr.shape[0], 1),
+                                                         cater_descr.values]).tolist(),
+                                       headings=['Column'] + cater_descr.columns.tolist())]
+                               ])
+
+        num_features = [['all']] + [[i] for i in num_cols]
+        cat_features = [['all']] + [[i] for i in cat_cols]
+
+        plottings = sg.Tab('Visualisations',
+                           layout=[
+                               [sg.Col(layout=[
+                                   [sg.T('Choose features')],
+                                   [sg.Fr('Numeric', layout=[
+                                       [sg.Table(values=num_features, enable_events=True, headings=['Column'],
+                                                 key='-NUMS-')]
+                                   ])],
+                                   [sg.Fr('Categorical', layout=[
+                                       [sg.Table(values=cat_features, enable_events=True, headings=['Column'],
+                                                 key='-CATS-')]
+                                   ])]
+                               ]), sg.VSep(), sg.Col(layout=[
+                                   [sg.Canvas(key='-CANVAS-', size=(5, 5))]
+                               ])
+                               ]])
 
         tabs = sg.TabGroup([
-            [data_tab, load_tab],
-            [num_stats_tab]
+            [data_tab, load_tab, num_stats_tab, cat_stats_tab, plottings],
         ])
     else:
         tabs = sg.TabGroup([
             [data_tab, load_tab],
         ])
 
-        features = [['Nothing here']]
-
     layout = [
-        [sg.Text('DataLoader', font='Ubuntu 25 italic')],
-        [sg.Column(layout=[
-            [sg.Text('Choose features')],
-            [sg.Table(values=features, enable_events=True, headings=['Column'], key='-COLUMNS-')]
-        ]), sg.VerticalSeparator(), sg.Column(layout=[[tabs]])],
-
-        [sg.HorizontalSeparator()],
-        [sg.Text(f'Data {data.shape[0]} rows x {data.shape[1]} columns')],
+        [sg.T('DataLoader', font='Ubuntu 25 italic')],
+        [tabs],
+        [sg.HSep()],
+        [sg.T(f'Data {data.shape[0]} rows x {data.shape[1]} columns')],
         [table],
     ]
 
@@ -118,7 +151,6 @@ while True:
         except Exception as e:
             sg.popup_error(str(e))
 
-
     elif event == 'Query':
         try:
             if len(data):
@@ -134,7 +166,6 @@ while True:
         except Exception as e:
             print(e)
             sg.popup(str(e))
-
 
     elif event == 'Reset':
         window.close()
@@ -158,7 +189,5 @@ while True:
                 window = create_window(queried, data, cols)
             else:
                 window = create_window(data, data, cols)
-
-
 
 window.close()
