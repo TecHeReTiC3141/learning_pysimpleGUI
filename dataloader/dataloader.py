@@ -1,6 +1,9 @@
 import PySimpleGUI as sg
 import pandas as pd
 import numpy as np
+import matplotlib
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import seaborn as sns
 
 data, queried = pd.read_csv('titanic.csv'), pd.DataFrame()
 pd.set_option("display.precision", 3)
@@ -12,11 +15,12 @@ from_formats = ['format', ['*.csv', '*.xlsx']]
 to_formats = ['formats', ['to .csv', 'to .xlsx']]
 cur_format = '*.csv'
 
+def plot_data(dtype: str, name: str, data: pd.DataFrame, plot_type: str):
+    pass
 
-# TODO create tab with data categorical stats (pandas.describe)
-# TODO implement saving of data and queries
+
 # TODO learn more about getting and changing certain rows
-def create_window(data: pd.DataFrame, all_data: pd.DataFrame, columns='all') -> sg.Window:
+def create_window(data: pd.DataFrame, all_data: pd.DataFrame, columns='all') -> tuple[matplotlib.figure.Figure, FigureCanvasTkAgg, sg.Window]:
     if isinstance(columns, list):
         values = np.hstack(
             (np.array(range(1, data.shape[0] + 1)).reshape((data.shape[0], 1)), data.iloc[:, columns].values)).tolist()
@@ -45,6 +49,7 @@ def create_window(data: pd.DataFrame, all_data: pd.DataFrame, columns='all') -> 
                 cat_cols.append(col)
             else:
                 num_cols.append(col)
+
         numer_descr = data[num_cols].describe().round(3).T
         cater_descr = data[cat_cols].describe(include=['object', 'float64', 'int']).round(3).T[['count', 'freq',
                                                                                                 'unique', 'top', 'mean']]
@@ -60,7 +65,7 @@ def create_window(data: pd.DataFrame, all_data: pd.DataFrame, columns='all') -> 
                                    [sg.Table(
                                        values=np.hstack([numer_descr.index.to_numpy().reshape(numer_descr.shape[0], 1),
                                                          numer_descr.values]).tolist(),
-                                       headings=['Column'] + numer_descr.columns.tolist())]
+                                       headings=['Column'] + numer_descr.columns.tolist(), expand_x=True)]
                                ])
 
         cat_stats_tab = sg.Tab('Caterogical Stats',
@@ -70,11 +75,11 @@ def create_window(data: pd.DataFrame, all_data: pd.DataFrame, columns='all') -> 
                                    [sg.Table(
                                        values=np.hstack([cater_descr.index.to_numpy().reshape(cater_descr.shape[0], 1),
                                                          cater_descr.values]).tolist(),
-                                       headings=['Column'] + cater_descr.columns.tolist())]
+                                       headings=['Column'] + cater_descr.columns.tolist(), expand_x=True)]
                                ])
 
-        num_features = [['all']] + [[i] for i in num_cols]
-        cat_features = [['all']] + [[i] for i in cat_cols]
+        num_features = [[i] for i in num_cols]
+        cat_features = [[i] for i in cat_cols]
 
         plottings = sg.Tab('Visualisations',
                            layout=[
@@ -82,12 +87,14 @@ def create_window(data: pd.DataFrame, all_data: pd.DataFrame, columns='all') -> 
                                    [sg.T('Choose features')],
                                    [sg.Fr('Numeric', layout=[
                                        [sg.Table(values=num_features, enable_events=True, headings=['Column'],
-                                                 key='-NUMS-')]
-                                   ])],
+                                                 key='-NUMS-', expand_x=True, num_rows=5)],
+                                       [sg.Spin(values=['Box plot', 'Hist plot', 'Dist plot'], key='-NUMPLOTS-')]
+                                   ], expand_x=True)],
                                    [sg.Fr('Categorical', layout=[
                                        [sg.Table(values=cat_features, enable_events=True, headings=['Column'],
-                                                 key='-CATS-')]
-                                   ])]
+                                                 key='-CATS-', expand_x=True, num_rows=5)],
+                                       [sg.Spin(values=['Count plot', 'Hist plot', ], key='-CATPLOTS-')]
+                                   ], expand_x=True)]
                                ]), sg.VSep(), sg.Col(layout=[
                                    [sg.Canvas(key='-CANVAS-', size=(5, 5))]
                                ])
@@ -95,11 +102,11 @@ def create_window(data: pd.DataFrame, all_data: pd.DataFrame, columns='all') -> 
 
         tabs = sg.TabGroup([
             [data_tab, load_tab, num_stats_tab, cat_stats_tab, plottings],
-        ])
+        ], expand_x=True, )
     else:
         tabs = sg.TabGroup([
             [data_tab, load_tab],
-        ])
+        ], expand_x=True)
 
     layout = [
         [sg.T('DataLoader', font='Ubuntu 25 italic')],
@@ -110,10 +117,21 @@ def create_window(data: pd.DataFrame, all_data: pd.DataFrame, columns='all') -> 
     ]
 
     window = sg.Window('DataLoader', layout=layout, element_justification='center', finalize=True)
-    return window
+
+    figure = matplotlib.figure.Figure(figsize=(6, 4))
+    figure.add_subplot(1, 1, 1).plot([], [])
+    figure.axes[0].set_xlabel('X')
+    figure.axes[0].set_ylabel('Y')
+
+    figure_canv = FigureCanvasTkAgg(figure, window['-CANVAS-'].TKCanvas)
+    figure_canv.draw()
+
+    figure_canv.get_tk_widget().pack()
+
+    return figure, figure_canv, window
 
 
-window = create_window(data, data)
+figure, figure_canv, window = create_window(data, data)
 
 while True:
     event, values = window.read()
@@ -129,12 +147,10 @@ while True:
         try:
             filepath = sg.popup_get_file('', no_window=True, )
             data = pd.read_csv(filepath)
-            window.close()
 
-            window = create_window(data, data)
-            print(window)
-            print(data.columns.values)
-            print(window['-DATA-'].Values[0], len(window['-DATA-'].Values))
+            window.close()
+            figure, figure_canv, window = create_window(data, data)
+
         except Exception as e:
             print(e)
             sg.popup(str(e))
@@ -158,7 +174,8 @@ while True:
                 queried = data.query(query)
 
                 window.close()
-                window = create_window(queried, data)
+                figure, figure_canv, window = create_window(queried, data)
+
                 window['-MAKEQUERY-'].update(query)
                 is_query = True
             else:
@@ -169,25 +186,16 @@ while True:
 
     elif event == 'Reset':
         window.close()
-        window = create_window(data, data)
+        figure, figure_canv, window = create_window(data, data)
         is_query = False
 
     elif event == '-DATA-':
         print(values[event])
 
-    elif event == '-COLUMNS-':
-        if 0 in values[event]:
-            window.close()
-            if is_query:
-                window = create_window(queried, data)
-            else:
-                window = create_window(data, data)
-        else:
-            cols = [i - 1 for i in values[event]]
-            window.close()
-            if is_query:
-                window = create_window(queried, data, cols)
-            else:
-                window = create_window(data, data, cols)
+    elif event == '-CATS-':
+        pass
+
+    elif event == '-NUMS-':
+        pass
 
 window.close()
