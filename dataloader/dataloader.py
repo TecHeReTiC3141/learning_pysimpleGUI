@@ -15,12 +15,31 @@ from_formats = ['format', ['*.csv', '*.xlsx']]
 to_formats = ['formats', ['to .csv', 'to .xlsx']]
 cur_format = '*.csv'
 
-def plot_data(dtype: str, name: str, data: pd.DataFrame, plot_type: str):
-    pass
+
+def plot_one_feature(dtype: str, name: str, data: pd.DataFrame, plot_type: str):
+    if dtype == 'num':
+        axes = figure.axes[0]
+        axes.clear()
+
+        axes.set_title(f'{plot_type.capitalize()} of {name}')
+
+        if plot_type == 'Box plot':
+            data[name].plot(kind='box', ax=axes)
+        elif plot_type == 'Hist plot':
+            data[name].plot(kind='hist', ax=axes)
+            data[name].plot(kind='kde', ax=axes)
+        elif plot_type == 'Dist plot':
+            sns.histplot(x=data[name], )
+        axes.grid()
+        axes.set_xlabel('index')
+        axes.set_ylabel(name)
+
+        figure_canv.draw()
+        figure_canv.get_tk_widget().pack()
 
 
 # TODO learn more about getting and changing certain rows
-def create_window(data: pd.DataFrame, all_data: pd.DataFrame, columns='all') -> tuple[matplotlib.figure.Figure, FigureCanvasTkAgg, sg.Window]:
+def create_window(data: pd.DataFrame, columns='all') -> tuple[list, list, matplotlib.figure.Figure, FigureCanvasTkAgg, sg.Window]:
     if isinstance(columns, list):
         values = np.hstack(
             (np.array(range(1, data.shape[0] + 1)).reshape((data.shape[0], 1)), data.iloc[:, columns].values)).tolist()
@@ -39,74 +58,72 @@ def create_window(data: pd.DataFrame, all_data: pd.DataFrame, columns='all') -> 
 
     load_tab = sg.Tab('Load and save', layout=[
         [sg.B('Load data', right_click_menu=from_formats), sg.T(f'Current format: {cur_format}', key='-CURFORM-')],
-        [sg.B('Save data', right_click_menu=to_formats), sg.T(f'Current format: {cur_format}', key='-CURFORM-')]
+        [sg.B('Save data', right_click_menu=to_formats, tooltip='Save data or query'), sg.T(f'Current format: {cur_format}', key='-CURFORM-')]
     ], expand_x=True)
 
-    if data.shape[1] > 0:
-        num_cols, cat_cols = [], []
-        for col in data.columns:
-            if data[col].dtype == np.object or data[col].nunique() <= 5:
-                cat_cols.append(col)
-            else:
-                num_cols.append(col)
+    num_cols, cat_cols = [], []
+    for col in data.columns:
+        if data[col].dtype == np.object or data[col].nunique() <= 5:
+            cat_cols.append(col)
+        else:
+            num_cols.append(col)
 
-        numer_descr = data[num_cols].describe().round(3).T
-        cater_descr = data[cat_cols].describe(include=['object', 'float64', 'int']).round(3).T[['count', 'freq',
-                                                                                                'unique', 'top', 'mean']]
+    numer_descr = data[num_cols].describe().round(3).T
+    cater_descr = data[cat_cols].describe(include=['object', 'float64', 'int']).round(3).T[['count', 'freq',
+                                                                                            'unique', 'top', 'mean']]
 
-        print(numer_descr)
+    print(numer_descr)
 
-        print(numer_descr.index.to_numpy().reshape(numer_descr.shape[0], 1), numer_descr.values)
+    print(numer_descr.index.to_numpy().reshape(numer_descr.shape[0], 1), numer_descr.values)
 
-        num_stats_tab = sg.Tab('Numeric Stats',
-                               layout=[
-                                   [sg.T('Numeric features description')],
-                                   [sg.HSep()],
-                                   [sg.Table(
-                                       values=np.hstack([numer_descr.index.to_numpy().reshape(numer_descr.shape[0], 1),
-                                                         numer_descr.values]).tolist(),
-                                       headings=['Column'] + numer_descr.columns.tolist(), expand_x=True)]
-                               ])
-
-        cat_stats_tab = sg.Tab('Caterogical Stats',
-                               layout=[
-                                   [sg.T('Categorical features description')],
-                                   [sg.HSep()],
-                                   [sg.Table(
-                                       values=np.hstack([cater_descr.index.to_numpy().reshape(cater_descr.shape[0], 1),
-                                                         cater_descr.values]).tolist(),
-                                       headings=['Column'] + cater_descr.columns.tolist(), expand_x=True)]
-                               ])
-
-        num_features = [[i] for i in num_cols]
-        cat_features = [[i] for i in cat_cols]
-
-        plottings = sg.Tab('Visualisations',
+    num_stats_tab = sg.Tab('Numeric Stats',
                            layout=[
-                               [sg.Col(layout=[
-                                   [sg.T('Choose features')],
-                                   [sg.Fr('Numeric', layout=[
-                                       [sg.Table(values=num_features, enable_events=True, headings=['Column'],
-                                                 key='-NUMS-', expand_x=True, num_rows=5)],
-                                       [sg.Spin(values=['Box plot', 'Hist plot', 'Dist plot'], key='-NUMPLOTS-')]
-                                   ], expand_x=True)],
-                                   [sg.Fr('Categorical', layout=[
-                                       [sg.Table(values=cat_features, enable_events=True, headings=['Column'],
-                                                 key='-CATS-', expand_x=True, num_rows=5)],
-                                       [sg.Spin(values=['Count plot', 'Hist plot', ], key='-CATPLOTS-')]
-                                   ], expand_x=True)]
-                               ]), sg.VSep(), sg.Col(layout=[
-                                   [sg.Canvas(key='-CANVAS-', size=(5, 5))]
-                               ])
-                               ]])
+                               [sg.T('Numeric features description')],
+                               [sg.HSep()],
+                               [sg.Table(
+                                   values=np.hstack([numer_descr.index.to_numpy().reshape(numer_descr.shape[0], 1),
+                                                     numer_descr.values]).tolist(),
+                                   headings=['Column'] + numer_descr.columns.tolist(), expand_x=True)]
+                           ])
 
-        tabs = sg.TabGroup([
-            [data_tab, load_tab, num_stats_tab, cat_stats_tab, plottings],
-        ], expand_x=True, )
-    else:
-        tabs = sg.TabGroup([
-            [data_tab, load_tab],
-        ], expand_x=True)
+    cat_stats_tab = sg.Tab('Caterogical Stats',
+                           layout=[
+                               [sg.T('Categorical features description')],
+                               [sg.HSep()],
+                               [sg.Table(
+                                   values=np.hstack([cater_descr.index.to_numpy().reshape(cater_descr.shape[0], 1),
+                                                     cater_descr.values]).tolist(),
+                                   headings=['Column'] + cater_descr.columns.tolist(), expand_x=True)]
+                           ])
+
+    num_features = [[i] for i in num_cols]
+    cat_features = [[i] for i in cat_cols]
+
+    plottings = sg.Tab('Visualisations',
+                       layout=[
+                           [sg.Col(layout=[
+                               [sg.T('Choose features')],
+                               [sg.Fr('Numeric', layout=[
+                                   [sg.Table(values=num_features, enable_events=True, headings=['Column'],
+                                             key='-NUMS-', expand_x=True, num_rows=5)],
+                                   [sg.Sp(values=['Box plot', 'Hist plot'], key='-NUMPLOTS-')]
+                               ], expand_x=True)],
+                               [sg.Fr('Categorical', layout=[
+                                   [sg.Table(values=cat_features, enable_events=True, headings=['Column'],
+                                             key='-CATS-', expand_x=True, num_rows=5)],
+                                   [sg.Sp(values=['Count plot', 'Hist plot', 'Bar plot', ], key='-CATPLOTS-')],
+                                   [sg.Sp(values=num_cols, key='-NUMCOLS-', visible=False)],
+                                   [sg.Sp(values=['sum', 'mean', 'median',], key='-AGGFUNCS-', visible=False)],
+                               ], expand_x=True)]
+                           ]), sg.VSep(), sg.Col(layout=[
+                               [sg.Canvas(key='-CANVAS-', size=(5, 5))]
+                           ])
+                           ]])
+
+    tabs = sg.TabGroup([
+        [data_tab, load_tab, num_stats_tab, cat_stats_tab, plottings],
+    ], expand_x=True, )
+
 
     layout = [
         [sg.T('DataLoader', font='Ubuntu 25 italic')],
@@ -128,13 +145,13 @@ def create_window(data: pd.DataFrame, all_data: pd.DataFrame, columns='all') -> 
 
     figure_canv.get_tk_widget().pack()
 
-    return figure, figure_canv, window
+    return num_cols, cat_cols, figure, figure_canv, window
 
 
-figure, figure_canv, window = create_window(data, data)
+num_cols, cat_cols, figure, figure_canv, window = create_window(data)
 
 while True:
-    event, values = window.read()
+    event, values = window.read(timeout=15)
 
     if event == sg.WIN_CLOSED:
         break
@@ -149,7 +166,7 @@ while True:
             data = pd.read_csv(filepath)
 
             window.close()
-            figure, figure_canv, window = create_window(data, data)
+            num_cols, cat_cols, figure, figure_canv, window = create_window(data)
 
         except Exception as e:
             print(e)
@@ -174,7 +191,7 @@ while True:
                 queried = data.query(query)
 
                 window.close()
-                figure, figure_canv, window = create_window(queried, data)
+                num_cols, cat_cols, figure, figure_canv, window = create_window(queried)
 
                 window['-MAKEQUERY-'].update(query)
                 is_query = True
@@ -186,7 +203,7 @@ while True:
 
     elif event == 'Reset':
         window.close()
-        figure, figure_canv, window = create_window(data, data)
+        num_cols, cat_cols, figure, figure_canv, window = create_window(data)
         is_query = False
 
     elif event == '-DATA-':
@@ -196,6 +213,14 @@ while True:
         pass
 
     elif event == '-NUMS-':
-        pass
+        plot_one_feature('num', num_cols[values[event][-1]], data, values['-NUMPLOTS-'])
+
+    if values['-CATPLOTS-'] in ['Count plot', 'Hist plot', ]:
+        window['-NUMCOLS-'].update(visible=False)
+        window['-AGGFUNCS-'].update(visible=False)
+    else:
+        window['-NUMCOLS-'].update(visible=True)
+        window['-AGGFUNCS-'].update(visible=True)
+
 
 window.close()
