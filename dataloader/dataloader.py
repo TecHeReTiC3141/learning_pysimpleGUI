@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import seaborn as sns
+from pathlib import Path
 
 data, queried = pd.read_csv('titanic.csv'), pd.DataFrame()
 pd.set_option("display.precision", 3)
@@ -14,6 +15,9 @@ sg.set_options(font='Ubuntu 15')
 from_formats = ['format', ['*.csv', '*.xlsx']]
 to_formats = ['formats', ['to .csv', 'to .xlsx']]
 cur_format = '*.csv'
+
+basic_dir = Path('.')
+print(basic_dir)
 
 
 def plot_one_feature(dtype: str, name: str, data: pd.DataFrame, plot_type: str):
@@ -39,7 +43,7 @@ def plot_one_feature(dtype: str, name: str, data: pd.DataFrame, plot_type: str):
 
 
 # TODO learn more about getting and changing certain rows
-def create_window(data: pd.DataFrame, columns='all') -> tuple[list, list, matplotlib.figure.Figure, FigureCanvasTkAgg, sg.Window]:
+def create_main_window(data: pd.DataFrame, columns='all') -> tuple[list, list, matplotlib.figure.Figure, FigureCanvasTkAgg, sg.Window]:
     if isinstance(columns, list):
         values = np.hstack(
             (np.array(range(1, data.shape[0] + 1)).reshape((data.shape[0], 1)), data.iloc[:, columns].values)).tolist()
@@ -70,7 +74,7 @@ def create_window(data: pd.DataFrame, columns='all') -> tuple[list, list, matplo
 
     numer_descr = data[num_cols].describe().round(3).T
     cater_descr = data[cat_cols].describe(include=['object', 'float64', 'int']).round(3).T[['count', 'freq',
-                                                                                            'unique', 'top', 'mean']]
+                                                                                            'unique', 'top']]
 
     print(numer_descr)
 
@@ -116,7 +120,8 @@ def create_window(data: pd.DataFrame, columns='all') -> tuple[list, list, matplo
                                    [sg.Sp(values=['sum', 'mean', 'median',], key='-AGGFUNCS-', visible=False)],
                                ], expand_x=True)]
                            ]), sg.VSep(), sg.Col(layout=[
-                               [sg.Canvas(key='-CANVAS-', size=(5, 5))]
+                               [sg.Canvas(key='-CANVAS-', size=(5, 5))],
+                               [sg.B('Save plot', disabled=True)]
                            ])
                            ]])
 
@@ -148,7 +153,39 @@ def create_window(data: pd.DataFrame, columns='all') -> tuple[list, list, matplo
     return num_cols, cat_cols, figure, figure_canv, window
 
 
-num_cols, cat_cols, figure, figure_canv, window = create_window(data)
+def save_vis(figure: matplotlib.figure.Figure):
+
+    layout = [
+        [sg.T('Save your plot', font='Ubuntu 17', pad=((0, 10), (5, 5)))],
+        [sg.Input(key='-FILENAME-', default_text=str(figure.axes[0].title) + ".png")],
+        [sg.B('Default directory', tooltip='Select where the plot will be saved'),
+         sg.B('Your directory', tooltip='Select where the plot will be saved')]
+    ]
+
+    window = sg.Window('Plot saving', layout=layout, element_justification='center')
+
+    event, values = window.read()
+
+    if event == 'Default directory':
+        path = basic_dir / 'visuals' / values['-FILENAME-']
+    else:
+        path = Path(sg.popup_get_folder('Choose directory', no_window=True), values['-FILENAME-'])
+    if not path.suffix.endswith('.png'):
+        path += '.png'
+    try:
+        figure.savefig(path)
+        sg.popup('Successfully saved')
+    except Exception as e:
+        sg.popup_error('Error while saving: ' + str(e))
+
+    finally:
+        window.close()
+
+
+
+
+
+num_cols, cat_cols, figure, figure_canv, window = create_main_window(data)
 
 while True:
     event, values = window.read(timeout=15)
@@ -166,7 +203,7 @@ while True:
             data = pd.read_csv(filepath)
 
             window.close()
-            num_cols, cat_cols, figure, figure_canv, window = create_window(data)
+            num_cols, cat_cols, figure, figure_canv, window = create_main_window(data)
 
         except Exception as e:
             print(e)
@@ -191,7 +228,7 @@ while True:
                 queried = data.query(query)
 
                 window.close()
-                num_cols, cat_cols, figure, figure_canv, window = create_window(queried)
+                num_cols, cat_cols, figure, figure_canv, window = create_main_window(queried)
 
                 window['-MAKEQUERY-'].update(query)
                 is_query = True
@@ -203,7 +240,7 @@ while True:
 
     elif event == 'Reset':
         window.close()
-        num_cols, cat_cols, figure, figure_canv, window = create_window(data)
+        num_cols, cat_cols, figure, figure_canv, window = create_main_window(data)
         is_query = False
 
     elif event == '-DATA-':
@@ -214,6 +251,10 @@ while True:
 
     elif event == '-NUMS-':
         plot_one_feature('num', num_cols[values[event][-1]], data, values['-NUMPLOTS-'])
+        window['Save plot'].update(disabled=False)
+
+    elif event == 'Save plot':
+        save_vis(figure)
 
     if values['-CATPLOTS-'] in ['Count plot', 'Hist plot', ]:
         window['-NUMCOLS-'].update(visible=False)
